@@ -5,6 +5,8 @@ const cors = require("cors");
 const authRouter = require("./auth/auth-router.js");
 const usersRouter = require("./users/users-router.js");
 
+
+
 const server = express();
 
 server.use(helmet());
@@ -20,5 +22,7 @@ server.use((err, req, res, next) => { // eslint-disable-line
     stack: err.stack,
   });
 });
+
+
 
 module.exports = server;
