@@ -6,33 +6,34 @@ const Users = require('../users/users-model')
 const bcrypt = require('bcryptjs');
 
 router.post("/register", validateRoleName, async (req, res, next) => {
-  /**
-    [POST] /api/auth/register { "username": "anna", "password": "1234", "role_name": "angel" }
+  try {
+    const { username, password, role_name } = req.body;
 
-    response:
-    status 201
-    {
-      "user"_id: 3,
-      "username": "anna",
-      "role_name": "angel"
+    // Trim and validate role_name
+    const trimmedRoleName = (role_name || '').trim();
+    if (trimmedRoleName.length > 32) {
+      return res.status(400).json({ message: "Role name must be 32 characters or less" });
     }
-   */
-    try {
-      const { username, password, role_name } = req.body;
-  
-      const hash = bcrypt.hashSync(password, 8); 
-  
-      const newUser = await Users.add({
-        username,
-        password: hash, 
-        role_name
-      });
-      res.status(201).json(newUser);
-    } catch (err) {
-      next(err); 
+    if (trimmedRoleName.toLowerCase() === 'admin') {
+      return res.status(403).json({ message: "Cannot register with role 'admin'" });
     }
+
+    // Hash the password
+    const hash = bcrypt.hashSync(password, 8);
+
+    // Add the user to the database
+    const newUser = await Users.add({
+      username,
+      password: hash, // Save the hashed password
+      role_name: trimmedRoleName
+    });
+
+    // Respond with the newly created user
+    res.status(201).json(newUser);
+  } catch (err) {
+    next(err); // Pass any errors to the error handling middleware
+  }
 });
-
 
 router.post("/login", checkUsernameExists, (req, res, next) => {
   /**
